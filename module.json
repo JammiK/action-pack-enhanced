@@ -2,7 +2,7 @@
   "id": "action-pack-enhanced",
   "title": "Action Pack Enhanced",
   "description": "Enhances the Action Pack module by adding additional features and automations as well as updating the module to support FoundryVTT v13+.",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "socket": true,
   "authors": [
     {
