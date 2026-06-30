@@ -13,6 +13,7 @@ export class ApeSection extends LitElement {
         api: { type: Object },
         showSpellDots: { type: Boolean },
         showSpellUses: { type: Boolean },
+        showSpellDamage: { type: Boolean },
         actor: { type: Object },
         masteries: { type: Object },
         forceOpen: { type: Boolean },
@@ -103,12 +104,14 @@ export class ApeSection extends LitElement {
             ${this.items && this.items.length > 0 ? html`
                 <div class="ape-items">
                     ${this.items.map(entry => html`
-                        <ape-item class="ape-item item" 
-                            data-item-uuid="${entry.item.uuid}" 
-                            .item="${entry.item}" 
-                            .uses="${entry.uses}" 
+                        <ape-item class="ape-item item"
+                            data-item-uuid="${entry.item.uuid}"
+                            .item="${entry.item}"
+                            .uses="${entry.uses}"
                             .api="${this.api}"
+                            .castLevel="${entry.castLevel}"
                             .masteryIds="${this.actor?.system?.traits?.weaponProf?.mastery?.value}"
+                            .showSpellDamage="${this.showSpellDamage}"
                             .showWeaponMastery="${this.showWeaponMastery}">
                         </ape-item>
                     `)}
@@ -123,7 +126,8 @@ export class ApeSection extends LitElement {
                     .api="${this.api}"
                     .actor="${this.actor}"
                     .showSpellDots="${this.showSpellDots}"
-                    .showSpellUses="${this.showSpellUses}">
+                    .showSpellUses="${this.showSpellUses}"
+                    .showSpellDamage="${this.showSpellDamage}">
                 </ape-group>
             `) : nothing}
         `;
@@ -139,6 +143,7 @@ export class ApeGroup extends LitElement {
         actor: { type: Object },
         showSpellDots: { type: Boolean },
         showSpellUses: { type: Boolean },
+        showSpellDamage: { type: Boolean },
         showCost: { type: Boolean },
         isOpen: { type: Boolean, state: true },
         forceOpen: { type: Boolean }
@@ -200,7 +205,7 @@ export class ApeGroup extends LitElement {
             ${hasItems ? html`
                 <div class="ape-items">
                     ${items.map(entry => html`
-                        <ape-item class="ape-item item" data-item-uuid="${entry.item.uuid}" .item="${entry.item}" .uses="${entry.uses}" .api="${this.api}"></ape-item>
+                        <ape-item class="ape-item item" data-item-uuid="${entry.item.uuid}" .item="${entry.item}" .uses="${entry.uses}" .api="${this.api}" .castLevel="${entry.castLevel}" .showSpellDamage="${this.showSpellDamage}"></ape-item>
                     `)}
                 </div>
             ` : nothing}

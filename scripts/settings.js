@@ -193,6 +193,34 @@ export function registerSettings(callbacks) {
 
     game.settings.register(
         "action-pack-enhanced",
+        "show-spell-damage",
+        {
+            name: "action-pack-enhanced.settings.show-spell-damage",
+            hint: "action-pack-enhanced.settings.show-spell-damage-hint",
+            scope: "client",
+            config: true,
+            default: false,
+            type: Boolean,
+            onChange: () => updateTray()
+        }
+    );
+
+    game.settings.register(
+        "action-pack-enhanced",
+        "show-upcast-duplicates",
+        {
+            name: "action-pack-enhanced.settings.show-upcast-duplicates",
+            hint: "action-pack-enhanced.settings.show-upcast-duplicates-hint",
+            scope: "client",
+            config: true,
+            default: false,
+            type: Boolean,
+            onChange: () => updateTray()
+        }
+    );
+
+    game.settings.register(
+        "action-pack-enhanced",
         "spellPointsTextColor",
         {
             name: "action-pack-enhanced.settings.spell-points-text-color",

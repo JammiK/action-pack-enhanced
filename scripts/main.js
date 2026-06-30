@@ -229,6 +229,7 @@ async function updateTray() {
     const traySize = prefix(game.settings.get("action-pack-enhanced", "tray-size"), "tray");
     const showSpellDots = game.settings.get("action-pack-enhanced", "show-spell-dots");
     const showSpellUses = game.settings.get("action-pack-enhanced", "show-spell-uses");
+    const showSpellDamage = game.settings.get("action-pack-enhanced", "show-spell-damage");
     const showWeaponMastery = game.settings.get("action-pack-enhanced", "show-weapon-mastery");
     const staticInfo = game.settings.get("action-pack-enhanced", "static-info");
     const allAbilities = Object.entries(CONFIG.DND5E.abilities);
@@ -252,6 +253,7 @@ async function updateTray() {
             abilityColumns,
             showSpellDots,
             showSpellUses,
+            showSpellDamage,
             showWeaponMastery,
             staticInfo
         };

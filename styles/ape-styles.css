@@ -952,6 +952,77 @@
                 max-width: 100%;
             }
         }
+
+        .ape-item-damage {
+            flex: 1 0 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px 8px;
+            padding-left: calc(var(--action-pack-icon) + 10px);
+            margin: -1px 0 3px;
+            font-size: 0.8rem;
+            line-height: 1.2;
+
+            .ape-damage {
+                white-space: nowrap;
+                font-variant-numeric: tabular-nums;
+                color: var(--ape-damage-color, rgba(255, 255, 255, 0.75));
+            }
+
+            .ape-damage-healing {
+                --ape-damage-color: #34d399;
+            }
+
+            .ape-damage-temphp {
+                --ape-damage-color: #60a5fa;
+            }
+
+            .ape-damage-type-fire {
+                --ape-damage-color: #ff7b3d;
+            }
+
+            .ape-damage-type-cold {
+                --ape-damage-color: #7ec8e3;
+            }
+
+            .ape-damage-type-lightning {
+                --ape-damage-color: #f4d35e;
+            }
+
+            .ape-damage-type-thunder {
+                --ape-damage-color: #b08be0;
+            }
+
+            .ape-damage-type-acid {
+                --ape-damage-color: #9bcc50;
+            }
+
+            .ape-damage-type-poison {
+                --ape-damage-color: #7bb33a;
+            }
+
+            .ape-damage-type-necrotic {
+                --ape-damage-color: #9a9ab0;
+            }
+
+            .ape-damage-type-radiant {
+                --ape-damage-color: #ffe066;
+            }
+
+            .ape-damage-type-psychic {
+                --ape-damage-color: #ff7ad9;
+            }
+
+            .ape-damage-type-force {
+                --ape-damage-color: #c0a0ff;
+            }
+
+            .ape-damage-type-bludgeoning,
+            .ape-damage-type-piercing,
+            .ape-damage-type-slashing {
+                --ape-damage-color: #d6d0c4;
+            }
+        }
     }
 
     .tray-small .ape-item .flag {

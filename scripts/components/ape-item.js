@@ -1,6 +1,6 @@
 import { LitElement, html, nothing } from 'lit';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-import { getItemDetails } from '../utils.js';
+import { getItemDetails, getDamageParts } from '../utils.js';
 
 export class ApeItem extends LitElement {
     static properties = {
@@ -8,8 +8,10 @@ export class ApeItem extends LitElement {
         uses: { type: Object },
         api: { type: Object },
         masteryIds: { type: Array },
+        castLevel: { type: Number },
         expanded: { type: Boolean, state: true },
         description: { type: Object, state: true },
+        showSpellDamage: { type: Boolean },
         showWeaponMastery: { type: Boolean }
     };
 
@@ -21,7 +23,7 @@ export class ApeItem extends LitElement {
     _onRoll(e) {
         e.preventDefault();
         e.stopPropagation(); // Prevent toggling when clicking the die
-        this.api.rollItem(this.item, e);
+        this.api.rollItem(this.item, e, this.castLevel);
     }
 
     _onRecharge(e) {
@@ -125,12 +127,14 @@ export class ApeItem extends LitElement {
                 ${(this.item.type === "weapon" || isShield) && !isEquipped ? html`<div class="unequipped flag" title="${game.i18n.localize("action-pack-enhanced.flag.unequipped-title")}" @mousedown="${this._onEquip}">${game.i18n.localize("action-pack-enhanced.flag.unequipped")}</div>` : nothing}
             </div>
             
-            <div class="item-drag-handle" 
-                    draggable="true" 
+            <div class="item-drag-handle"
+                    draggable="true"
                     title="${game.i18n.localize("action-pack-enhanced.drag-to-target")}"
                     @dragstart="${this._onDragStart}">
                 <i class="fas fa-grip-vertical"></i>
             </div>
+
+            ${this._renderDamage()}
 
             ${this.expanded ? html`
                 <div class="item-summary" style="display:block">
@@ -148,6 +152,24 @@ export class ApeItem extends LitElement {
         event.preventDefault();
         event.stopPropagation();
         this.item.update({ "system.equipped": true });
+    }
+
+    _renderDamage() {
+        if (!this.showSpellDamage) return nothing;
+        if (!["spell", "weapon", "feat"].includes(this.item.type)) return nothing;
+
+        const parts = getDamageParts(this.item, this.castLevel);
+        if (!parts.length) return nothing;
+
+        return html`
+            <div class="ape-item-damage">
+                ${parts.map(part => html`
+                    <span class="ape-damage ape-damage-${part.kind} ape-damage-type-${part.typeKey || 'none'}">
+                        ${part.formula}${part.typeLabel ? html` ${part.typeLabel}` : nothing}
+                    </span>
+                `)}
+            </div>
+        `;
     }
 
     _renderItemDetails() {

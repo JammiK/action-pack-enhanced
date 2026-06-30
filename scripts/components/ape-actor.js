@@ -365,6 +365,7 @@ export class ApeActor extends LitElement {
                     .actor="${actor}"
                     .showSpellDots="${this.globalData.showSpellDots}"
                     .showSpellUses="${this.globalData.showSpellUses}"
+                    .showSpellDamage="${this.globalData.showSpellDamage}"
                     .showWeaponMastery="${this.globalData.showWeaponMastery}"
                     .forceOpen="${data.forceOpen}">
                 </ape-section>

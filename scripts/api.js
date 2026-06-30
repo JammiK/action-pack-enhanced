@@ -370,9 +370,11 @@ export class ActionPackAPI {
 
     /**
      * Rolls an Item
-     * @param {Item} item 
+     * @param {Item} item
+     * @param {Event} [event]
+     * @param {number} [castLevel] Spell slot level to pre-select in the cast dialog
      */
-    async rollItem(item, event) {
+    async rollItem(item, event, castLevel) {
         if (!item) return;
 
         // Item Macro Support
@@ -382,7 +384,38 @@ export class ActionPackAPI {
                 return;
             }
         }
-        return item.use({}, event);
+
+        // When the row represents an upcast level, open the cast dialog with that
+        // higher spell slot pre-selected. Base-level rows keep the default cast flow.
+        if (item.type === "spell" && item.actor && Number.isFinite(castLevel) && castLevel > (item.system?.level ?? 0)) {
+            return this._castSpellAtLevel(item, castLevel, event);
+        }
+
+        return item.use({ event }, {}, {});
+    }
+
+    /**
+     * Uses a spell with a given slot level pre-selected in the cast dialog. The dialog
+     * is still shown so the player can confirm consumption, place a template, etc.
+     * @param {Item} item
+     * @param {number} castLevel
+     * @param {Event} [event]
+     */
+    async _castSpellAtLevel(item, castLevel, event) {
+        const activities = item.system?.activities;
+        const activity = activities?.find?.(a => a.canUse) ?? activities?.contents?.[0];
+        if (!activity) return item.use({ event }, {}, {});
+
+        // The cast dialog matches against the actor's spell slot keys ("spell4", "pact"),
+        // not a bare number, so map the level to the right key.
+        const spells = item.actor.system.spells ?? {};
+        let slotKey = `spell${castLevel}`;
+        if (!spells[slotKey]) {
+            const match = Object.entries(spells).find(([, slot]) => slot?.level === castLevel && slot?.max);
+            if (match) slotKey = match[0];
+        }
+
+        return activity.use({ event, spell: { slot: slotKey } }, { configure: true }, {});
     }
 
     /**

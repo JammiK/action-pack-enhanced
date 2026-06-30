@@ -1,4 +1,4 @@
-import { calculateUsesForItem } from "./utils.js";
+import { calculateUsesForItem, validUpcastLevels } from "./utils.js";
 
 export class ActionPackDataBuilder {
     constructor() {
@@ -10,6 +10,7 @@ export class ActionPackDataBuilder {
         this.settingShowUnpreparedSpells = game.settings.get("action-pack-enhanced", "show-unprepared-spells");
         this.settingSortAlphabetically = game.settings.get("action-pack-enhanced", "sort-alphabetic");
         this.settingShowWeaponMastery = game.settings.get("action-pack-enhanced", "show-weapon-mastery");
+        this.settingShowUpcastDuplicates = game.settings.get("action-pack-enhanced", "show-upcast-duplicates");
 
         return actors.map(actor => this.prepareActor(actor, scrollPosition));
     }
@@ -181,7 +182,19 @@ export class ActionPackDataBuilder {
                 const isDisplayableCantrip = itemData.level == 0 && this.settingShowUnpreparedCantrips;
                 const isDisplayableUnpreparedSpell = itemData.level > 0 && this.settingShowUnpreparedSpells;
                 if (isAlways || isPrepared || isCastableRitual || isDisplayableCantrip || isDisplayableUnpreparedSpell) {
-                    sections.spell.groups[`spell${itemData.level}`].items.push({ item, uses });
+                    // List an upcastable spell once per castable slot level, tagging each
+                    // row with the level it will be cast at. Falls back to a single
+                    // base-level row when the feature is off or the spell can't be upcast.
+                    const castLevels = (this.settingShowUpcastDuplicates && itemData.level > 0)
+                        ? validUpcastLevels(item)
+                        : [];
+                    if (castLevels.length) {
+                        for (const castLevel of castLevels) {
+                            sections.spell.groups[`spell${castLevel}`]?.items.push({ item, uses, castLevel });
+                        }
+                    } else {
+                        sections.spell.groups[`spell${itemData.level}`].items.push({ item, uses });
+                    }
                 }
                 break;
             case "atwill":

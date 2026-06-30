@@ -68,6 +68,134 @@ function _formatSchool(item) {
     return "";
 }
 
+/**
+ * Build the damage / healing descriptor for an item's first damaging activity,
+ * optionally scaled to a spell-slot level. Used to render the D&D Beyond style dice
+ * label beneath an item name. Only leveled spells cast above their base level are
+ * scaled; weapons, features and cantrips show their current (system computed) dice.
+ *
+ * @param {Item5e} item          The item (spell, weapon or feature).
+ * @param {number} [castLevel]   The spell-slot level the row represents.
+ * @returns {{formula: string, typeKey: string, typeLabel: string, kind: string}[]}
+ */
+export function getDamageParts(item, castLevel) {
+    const activities = item?.system?.activities;
+    const list = activities?.contents ?? (activities ? [...activities] : []);
+    if (!list.length) return [];
+
+    const isSpell = item.type === "spell";
+    const baseLevel = isSpell ? (item.system?.level ?? 0) : 0;
+    const increase = (isSpell && baseLevel > 0 && Number.isFinite(castLevel))
+        ? Math.max(0, castLevel - baseLevel)
+        : 0;
+
+    for (const activity of list) {
+        const parts = increase
+            ? _scaledDamageParts(activity, increase, item)
+            : _baseDamageParts(activity, item);
+        if (parts.length) return parts;
+    }
+    return [];
+}
+
+// Unscaled label: prefer the system's precomputed labels (these already reflect
+// cantrip scaling and ability-mod bonuses) and fall back to the raw damage parts.
+function _baseDamageParts(activity, item) {
+    const labels = activity?.labels?.damages ?? activity?.labels?.damage;
+    if (Array.isArray(labels) && labels.length) {
+        const described = labels
+            .filter(label => label?.formula)
+            .map(label => _describeDamage(label.formula, label.damageType));
+        if (described.length) return described;
+    }
+    return _scaledDamageParts(activity, 0, item);
+}
+
+// Scaled label: ask each damage / healing part for its formula at the given increase.
+function _scaledDamageParts(activity, increase, item) {
+    const sources = [...(activity?.damage?.parts ?? [])];
+    if (activity?.healing?.formula || activity?.healing?.number) sources.push(activity.healing);
+
+    const parts = [];
+    for (const source of sources) {
+        const formula = _resolvePartFormula(source, increase, item);
+        if (formula) parts.push(_describeDamage(formula, _damageTypeKey(source)));
+    }
+    return parts;
+}
+
+function _resolvePartFormula(part, increase, item) {
+    try {
+        let formula = (increase && typeof part.scaledFormula === "function")
+            ? part.scaledFormula(increase)
+            : part.formula;
+        if (!formula) return "";
+        if (formula.includes("@")) {
+            const rollData = item.getRollData?.() ?? {};
+            formula = Roll.replaceFormulaData(formula, rollData, { missing: "0" });
+        }
+        return formula;
+    } catch (err) {
+        console.warn("Action Pack Enhanced | unable to scale damage formula", err);
+        return "";
+    }
+}
+
+function _simplifyDamageFormula(formula) {
+    const simplify = globalThis.dnd5e?.dice?.simplifyRollFormula;
+    if (typeof simplify === "function") {
+        try { return simplify(formula, { preserveFlavor: false }); } catch (err) { /* fall through */ }
+    }
+    return String(formula).replace(/\s+/g, " ").trim();
+}
+
+function _damageTypeKey(part) {
+    if (part?.types?.size) return [...part.types][0];
+    if (Array.isArray(part?.types) && part.types.length) return part.types[0];
+    return part?.damageType ?? "";
+}
+
+function _describeDamage(formula, typeKey) {
+    const config = CONFIG.DND5E.damageTypes?.[typeKey] ?? CONFIG.DND5E.healingTypes?.[typeKey];
+    const typeLabel = config?.label ? config.label.toLowerCase() : "";
+    let kind = "damage";
+    if (typeKey === "healing") kind = "healing";
+    else if (typeKey === "temphp") kind = "temphp";
+    return { formula: _simplifyDamageFormula(formula), typeKey: typeKey || "", typeLabel, kind };
+}
+
+/**
+ * Determine the spell-slot levels at which a spell can be cast for a given actor — its
+ * base level plus every higher level the actor has slots for. Used to list an
+ * upcastable spell once per castable level.
+ *
+ * @param {Item5e} item     A spell item.
+ * @param {Actor5e} [actor] The casting actor (defaults to the item's owner).
+ * @returns {number[]}      Ascending slot levels (base first); empty for non-upcastable spells.
+ */
+export function validUpcastLevels(item, actor = item?.actor) {
+    if (item?.type !== "spell" || !actor) return [];
+
+    const baseLevel = item.system?.level ?? 0;
+    if (baseLevel < 1) return []; // cantrips scale by character level, not by slot
+
+    const activity = item.system.activities?.find?.(a => a.canScale)
+        ?? item.system.activities?.contents?.[0];
+    const canScale = activity?.canScale ?? true;
+    if (!canScale) return [baseLevel];
+
+    const levels = new Set([baseLevel]);
+    for (const [key, slot] of Object.entries(actor.system.spells ?? {})) {
+        if (!slot?.max) continue;
+        // Only numbered slot pools ("spell1".."spell9"); pact magic is shown in its own group.
+        const match = /^spell(\d+)$/.exec(key);
+        if (!match) continue;
+        const level = Number(match[1]);
+        if (level > baseLevel) levels.add(level);
+    }
+    return [...levels].sort((a, b) => a - b);
+}
+
 export function generateRaceClassDisplay(actor) {
     // in the format (Human - Wizard [Abjurer], Fighter [Defense])
     let raceClass = {};
